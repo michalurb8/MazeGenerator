@@ -2,9 +2,9 @@
 
 class Grid
 {
-    enum tileState {CORRIDOR = 0, WALL, DOOR_OPENED, DOOR_CLOSED};
+    enum tileState {CORRIDOR = 0, WALL, DOOR_OPENED, DOOR_CLOSED, PASSING};
     enum direction {UP = 0, RIGHT, DOWN, LEFT};
-    unsigned int width, height;
+    unsigned int width, height, doorsOpen;
     tileState* structure; 
 public:
     Grid() = delete;
@@ -16,9 +16,10 @@ public:
     unsigned int GetWidth() const;
     unsigned int GetHeight() const;
 
-
     bool CheckStep(unsigned int mazeX, unsigned int mazeY) const;
     direction TakeStep(unsigned int mazeX, unsigned int mazeY);
+    bool CreatePath();
+    void ClearPath();
 
     void Draw() const;
 
