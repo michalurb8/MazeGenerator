@@ -2,9 +2,9 @@
 
 class Grid
 {
-    enum tileState {CORRIDOR = 0, WALL, DOOR_OPENED, DOOR_CLOSED, PASSING};
+    enum tileState {CORRIDOR = 0, WALL, PILLAR, PATH};
     enum direction {UP = 0, RIGHT, DOWN, LEFT};
-    unsigned int width, height, doorsOpen;
+    unsigned int width, height;
     tileState* structure; 
 public:
     Grid() = delete;
@@ -16,12 +16,13 @@ public:
     unsigned int GetWidth() const;
     unsigned int GetHeight() const;
 
-    bool CheckStep(unsigned int mazeX, unsigned int mazeY) const;
-    direction TakeStep(unsigned int mazeX, unsigned int mazeY);
+    unsigned int CheckSteps(unsigned int xPos, unsigned int yPos) const;
+    bool CheckStuck(unsigned int xPos, unsigned int yPos) const;
+    direction TakeStep(unsigned int xPos, unsigned int yPos);
     bool CreatePath();
     void ClearPath();
 
-    void Draw() const;
+    void Draw(std::string fileName = "default") const;
 
     Grid operator=(const Grid& arg);
 };

@@ -12,7 +12,7 @@ Grid.o: Grid.cpp
 	g++ $(CF) -c Grid.cpp -o Grid.o
 
 clean:
-	rm -f main.o Grid.o exe
+	rm -f main.o Grid.o exe *.bmp
 
 preview:
 	eog maze.bmp
