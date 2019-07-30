@@ -6,21 +6,23 @@
 #include "Image.h"
 
 Grid::Grid(unsigned int widthArg, unsigned int heightArg)
-:width(widthArg), height(heightArg)
+:width(widthArg), height(heightArg), gridW(2*width +1), gridH(2*height + 1)
 {
-    structure = new tileState[(2*width + 1) * (2*height + 1)];
+    array = new tileState[gridW * gridH];
     SetStates();
 }
 Grid::Grid(const Grid& arg)
 {
     width = arg.GetWidth();
     height = arg.GetHeight();
-    structure = new tileState[(2*width + 1) * (2*height + 1)];
+    gridW = 2 * width + 1;
+    gridH = 2 * height + 1;
+    array = new tileState[gridW * gridH];
     SetStates();
 }
 Grid::~Grid()
 {
-    delete[] structure;
+    delete[] array;
 }
 unsigned int Grid::GetWidth() const
 {
@@ -33,12 +35,10 @@ unsigned int Grid::GetHeight() const
 void Grid::SetStates()
 {
     srand(time(NULL));
-    unsigned int gridW = 2*width + 1;
-    unsigned int gridH = 2*height + 1;
     for(unsigned int y = 1; y < gridH - 1; ++y)
         for(unsigned int x = 1; x < gridW - 1; ++x) //for each tile inside of the maze:
         {
-            tileState& ref = structure[y * gridW + x];
+            tileState& ref = array[y * gridW + x];
             if(x%2==0 && y%2==0) 
                 ref = Grid::PILLAR;
             else
@@ -46,33 +46,32 @@ void Grid::SetStates()
         }
     for(unsigned int y = 0; y < gridH; ++y)//each tile on the border, its a wall
     {
-        structure[y * gridW] = Grid::WALL;
-        structure[y * gridW + gridW - 1] = Grid::WALL;
+        array[y * gridW] = Grid::WALL;
+        array[y * gridW + gridW - 1] = Grid::WALL;
     }
     for(unsigned int x = 0; x < gridW; ++x)//each tile on the border, its a wall
     {
-        structure[x] = Grid::WALL;
-        structure[gridH * gridW - 1 - x] = Grid::WALL;
+        array[x] = Grid::WALL;
+        array[gridH * gridW - 1 - x] = Grid::WALL;
     }
 }
 unsigned int Grid::CheckSteps(unsigned int xPos, unsigned int yPos) const
 {
-    unsigned int gridW = 2*width + 1, sum = 0;
-    if(structure[yPos * gridW + xPos] != PILLAR) return 0;
+    unsigned int sum = 0;
+    if(array[yPos * gridW + xPos] != PILLAR) return 0;
     for(unsigned int i = 0; i < 4; ++i)
     {
         unsigned int dx = (i%2)  *  (2-i);
         unsigned int dy = ((i+1)%2)*(i-1);
-        if(structure[(yPos + dy) * gridW + xPos + dx] == CORRIDOR)
-            if(structure[(yPos + dy + dy) * gridW + xPos + dx + dx] != PATH)
+        if(array[(yPos + dy) * gridW + xPos + dx] == CORRIDOR)
+            if(array[(yPos + dy + dy) * gridW + xPos + dx + dx] != PATH)
                 ++sum;
     }
     return sum;
 }
 bool Grid::CheckStuck(unsigned int xPos, unsigned int yPos) const
 {
-    unsigned int gridW = 2*width + 1;
-    if(structure[yPos * gridW + xPos] != PILLAR)
+    if(array[yPos * gridW + xPos] != PILLAR)
     {
         std::cout << "NOT A PILLAR??? CHECK STUCK" << std::endl;
         return false;
@@ -81,27 +80,26 @@ bool Grid::CheckStuck(unsigned int xPos, unsigned int yPos) const
     {
         unsigned int dx = (i%2)  *  (2-i);
         unsigned int dy = ((i+1)%2)*(i-1);
-        if(structure[(yPos + dy + dy) * gridW + xPos + dx + dx] != PATH) return false;
+        if(array[(yPos + dy + dy) * gridW + xPos + dx + dx] != PATH) return false;
     }
     return true;
 }
 Grid::direction Grid::TakeStep(unsigned int xPos, unsigned int yPos)
 {
-    unsigned int gridW = 2*width + 1;
     unsigned int sum = 0, index = 0;
     sum = CheckSteps(xPos, yPos);
     index = rand()%sum;
-    structure[yPos * gridW + xPos] = PATH;
+    array[yPos * gridW + xPos] = PATH;
     for(unsigned int i = 0; i < 4; ++i)
     {
         unsigned int dx = (i%2)*(2-i);
         unsigned int dy = ((i+1)%2)*(i-1);
-        if(structure[(yPos + dy) * gridW + (xPos + dx)] == CORRIDOR)
-            if(structure[(yPos + dy + dy) * gridW + (xPos + dx + dx)] != PATH)
+        if(array[(yPos + dy) * gridW + (xPos + dx)] == CORRIDOR)
+            if(array[(yPos + dy + dy) * gridW + (xPos + dx + dx)] != PATH)
             {
                 if(index < 1)
                 {
-                    structure[(yPos + dy) * gridW + (xPos + dx)] = PATH;
+                    array[(yPos + dy) * gridW + (xPos + dx)] = PATH;
                     return direction(i);
                 }
                 else --index;
@@ -112,12 +110,12 @@ Grid::direction Grid::TakeStep(unsigned int xPos, unsigned int yPos)
 }
 bool Grid::CreatePath()
 {
-    unsigned int gridW = 2*width + 1;
-    unsigned int gridH = 2*height + 1;
-    unsigned int xPos = rand()%(width  - 1);
-    unsigned int yPos = rand()%(height - 1);
-    xPos = xPos*2 + 2;
-    yPos = yPos*2 + 2; //Choosing random pillar/wall coordinates
+    unsigned int randX = rand()%(width  - 1);
+    unsigned int randY = rand()%(height - 1);
+    randX = randX*2 + 2;
+    randY = randY*2 + 2; //Choosing random pillar/wall coordinates
+    unsigned int xPos = randX;
+    unsigned int yPos = randY;
     while(!CheckSteps(xPos, yPos))//Find first non wall coordinates
     {
         xPos += 2;
@@ -130,48 +128,52 @@ bool Grid::CreatePath()
             }
             xPos = 2;
         }
+        if(xPos == randX && yPos == randY)
+        {
+            return false;
+        }
     }
-    while(structure[yPos*gridW + xPos] != WALL)//Closed doors become passages in a chain until wall hit
+    while(array[yPos*gridW + xPos] != WALL)//Closed doors become passages in a chain until wall hit
     {
         if(CheckStuck(xPos, yPos)) //If can't move and didn't touch wall, pick furthest path tile in random dir and go on
         {
-            structure[yPos*gridW + xPos] = PATH;
+            array[yPos*gridW + xPos] = PATH;
             direction jump = direction(rand()%4);
             switch(jump)
             {
             case UP:
                 for(unsigned int y = 0; y <= yPos; y+=2)
-                    if(structure[y * gridW + xPos] == PATH)
+                    if(array[y * gridW + xPos] == PATH)
                     {
                         yPos = y;
-                        structure[yPos * gridW + xPos] = PILLAR;
+                        array[yPos * gridW + xPos] = PILLAR;
                         break;
                     }
                 break;
             case RIGHT:
                 for(unsigned int x = gridW-1; x >= xPos; x-=2)
-                    if(structure[yPos * gridW + x] == PATH)
+                    if(array[yPos * gridW + x] == PATH)
                     {
                         xPos = x;
-                        structure[yPos * gridW + xPos] = PILLAR;
+                        array[yPos * gridW + xPos] = PILLAR;
                         break;
                     }
                 break;
             case DOWN:
                 for(unsigned int y = gridH-1; y >= yPos; y-=2)
-                    if(structure[y * gridW + xPos] == PATH)
+                    if(array[y * gridW + xPos] == PATH)
                     {
                         yPos = y;
-                        structure[yPos * gridW + xPos] = PILLAR;
+                        array[yPos * gridW + xPos] = PILLAR;
                         break;
                     }
                 break;
             case LEFT:
                 for(unsigned int x = 0; x <= xPos; x+=2)
-                    if(structure[yPos * gridW + x] == PATH)
+                    if(array[yPos * gridW + x] == PATH)
                     {
                         xPos = x;
-                        structure[yPos * gridW + xPos] = PILLAR;
+                        array[yPos * gridW + xPos] = PILLAR;
                         break;
                     }
                 break;
@@ -195,27 +197,37 @@ bool Grid::CreatePath()
     }
     return true;
 }
+void Grid::ClearPath(unsigned int xPos, unsigned int yPos)
+{
+    if(array[yPos * gridH + xPos] != PATH) return;
+    ClearPath(xPos, yPos-1);
+    ClearPath(xPos+1, yPos);
+    ClearPath(xPos, yPos+1);
+    ClearPath(xPos-1, yPos);
+    array[yPos * gridH + xPos] = WALL;
+}
 void Grid::ClearPath()
 {
-    unsigned int gridW = 2*width + 1;
-    unsigned int gridH = 2*height + 1;
     for(unsigned int y = 0; y < gridH; ++y)
         for(unsigned int x = 0; x < gridW; ++x)
         {
-            tileState& ref = structure[y * gridW + x];
+            tileState& ref = array[y * gridW + x];
             if(ref == PATH) ref = WALL;
         }
 }
+void Grid::Fill()
+{
+    while(CreatePath())
+        ClearPath();
+}
 void Grid::Draw(std::string fileName) const
 {
-    unsigned int gridW = 2*width + 1;
-    unsigned int gridH = 2*height + 1;
     Image result(gridW, gridH);
     result.SetAll(128, 128, 128);
     for(unsigned int y = 0; y < gridH; ++y)
         for(unsigned int x = 0; x < gridW; ++x)
         {
-            tileState& ref = structure[y * gridW + x];
+            tileState& ref = array[y * gridW + x];
             switch(ref)
             {
             case WALL:
@@ -236,10 +248,12 @@ void Grid::Draw(std::string fileName) const
 }
 Grid Grid::operator=(const Grid& arg)
 {
-    delete[] structure;
+    delete[] array;
     width = arg.GetWidth();
     height = arg.GetHeight();
-    structure = new tileState[(2*width + 1) * (2*height + 1)];
+    gridW = 2 * width + 1;
+    gridH = 2 * height + 1;
+    array = new tileState[gridH * gridW];
     SetStates();
     return *this;
 }

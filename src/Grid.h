@@ -4,8 +4,8 @@ class Grid
 {
     enum tileState {CORRIDOR = 0, WALL, PILLAR, PATH};
     enum direction {UP = 0, RIGHT, DOWN, LEFT};
-    unsigned int width, height;
-    tileState* structure; 
+    unsigned int width, height, gridW, gridH;
+    tileState* array; 
 public:
     Grid() = delete;
     Grid(unsigned int widthArg, unsigned int heightArg);
@@ -15,12 +15,15 @@ public:
 
     unsigned int GetWidth() const;
     unsigned int GetHeight() const;
+    tileState& GetElem(unsigned int x, unsigned int y);
 
     unsigned int CheckSteps(unsigned int xPos, unsigned int yPos) const;
     bool CheckStuck(unsigned int xPos, unsigned int yPos) const;
     direction TakeStep(unsigned int xPos, unsigned int yPos);
     bool CreatePath();
     void ClearPath();
+    void ClearPath(unsigned int xPos, unsigned int yPos);
+    void Fill();
 
     void Draw(std::string fileName = "default") const;
 

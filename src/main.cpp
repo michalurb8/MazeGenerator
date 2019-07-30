@@ -2,12 +2,8 @@
 #include "Grid.h"
 int main()
 {
-    Grid xd(50,50);
-    xd.CreatePath();
-    xd.ClearPath();
-    xd.CreatePath();
-    xd.ClearPath();
-    xd.CreatePath();
+    Grid xd(300,300);
+    xd.Fill();
     xd.Draw("maze");
     return 0;
 }

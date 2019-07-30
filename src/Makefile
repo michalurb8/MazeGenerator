@@ -1,4 +1,4 @@
-CF = -Wall -pedantic
+CF = -O3 -Wall -pedantic
 
 default: clean main.o Grid.o Pixel.o Image.o
 	g++ main.o Grid.o Pixel.o Image.o -o exe
