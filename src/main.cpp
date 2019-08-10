@@ -2,8 +2,9 @@
 #include "Grid.h"
 int main()
 {
-    Grid xd(300,300);
-    xd.Fill();
-    xd.Draw("maze");
+    const int size = 800;
+    Grid grid(size, size);
+    grid.Generate();
+    grid.Draw("maze");
     return 0;
 }

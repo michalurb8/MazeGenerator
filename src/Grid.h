@@ -2,7 +2,7 @@
 
 class Grid
 {
-    enum tileState {CORRIDOR = 0, WALL, PILLAR, PATH};
+    enum tileState {WALL = 0, BORDER, CORRIDOR};
     enum direction {UP = 0, RIGHT, DOWN, LEFT};
     unsigned int width, height, gridW, gridH;
     tileState* array; 
@@ -17,13 +17,9 @@ public:
     unsigned int GetHeight() const;
     tileState& GetElem(unsigned int x, unsigned int y);
 
+    void Dfs(unsigned int xPos, unsigned int yPos);
     unsigned int CheckSteps(unsigned int xPos, unsigned int yPos) const;
-    bool CheckStuck(unsigned int xPos, unsigned int yPos) const;
-    direction TakeStep(unsigned int xPos, unsigned int yPos);
-    bool CreatePath();
-    void ClearPath();
-    void ClearPath(unsigned int xPos, unsigned int yPos);
-    void Fill();
+    void Generate();
 
     void Draw(std::string fileName = "default") const;
 
